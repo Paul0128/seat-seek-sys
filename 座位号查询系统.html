@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>座位号查询系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 300px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"], input[type="file"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .admin-mode {
+            display: none;
+        }
+        .admin-mode.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="title">座位号查询系统</h2>
+        <div id="admin-login" style="display:none;">
+            <input type="password" id="admin-password" placeholder="请输入管理员密码">
+            <button onclick="loginAdmin()">登录</button>
+        </div>
+        <div id="admin-mode" class="admin-mode">
+            <input type="file" id="csv-file" accept=".csv">
+            <button onclick="importSeatsFromCSV()">导入座位信息</button>
+            <button onclick="toggleAdminMode()">退出管理员模式</button>
+        </div>
+        <input type="text" id="name-input-guest" placeholder="请输入您的姓名">
+        <button onclick="findSeat()">查询座位号</button>
+        <p id="result"></p>
+        <button onclick="showAdminLogin()">管理员模式</button>
+    </div>
+
+    <script>
+        const ADMIN_PASSWORD = "gdo20a";
+        const seats = JSON.parse(localStorage.getItem('seats')) || {};
+
+        function showAdminLogin() {
+            document.getElementById('admin-login').style.display = 'block';
+        }
+
+        function loginAdmin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-mode').classList.add('active');
+            } else {
+                alert('密码错误，请重试');
+            }
+        }
+
+        function importSeatsFromCSV() {
+            const fileInput = document.getElementById('csv-file');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请选择一个CSV文件');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csvData = e.target.result;
+                parseCSV(csvData);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(data) {
+            const lines = data.split('\n');
+            for (let i = 1; i < lines.length; i++) {
+                const row = lines[i].split(',');
+                if (row.length >= 2) {
+                    const name = row[0].trim();
+                    const seat = row[1].trim();
+                    seats[name] = seat;
+                }
+            }
+            localStorage.setItem('seats', JSON.stringify(seats));
+            alert('座位信息已成功导入');
+        }
+
+        function findSeat() {
+            const name = document.getElementById('name-input-guest').value.trim();
+            const resultElement = document.getElementById('result');
+            if (seats[name]) {
+                resultElement.textContent = `您的座位号是: ${seats[name]}`;
+            } else {
+                resultElement.textContent = '未找到您的座位信息';
+            }
+        }
+
+        function toggleAdminMode() {
+            document.getElementById('admin-mode').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
